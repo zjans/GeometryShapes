@@ -1,3 +1,10 @@
+forked from pvandegeer/GeometryShapes
+
+adapted `geometry_shapes_tools.py` to enable rapid digitizing without GUI popup windows and circles as default shape.
+
+---
+
+
 # Geometry Shapes
 This QGis plugin draws basic geometry shapes with user defined measurements and also allows free drawing. 
 
