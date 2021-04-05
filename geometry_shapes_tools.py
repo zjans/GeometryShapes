@@ -122,36 +122,36 @@ class GeometryTool(QgsMapTool):
             return
 
         # fixme: use QGis project 'measurement units' in stead of project crs units
-        title = 'Set size ({})'.format(QgsUnitTypes.toString(self.canvas.mapUnits()))
-        self.dlg.setWindowTitle(title)
-        self.dlg.width.setValue(rect.width())
-        self.dlg.height.setValue(rect.height())
-        self.dlg.show()
-        result = self.dlg.exec_()
+        # title = 'Set_Size ({})'.format(QgsUnitTypes.toString(self.canvas.mapUnits()))
+        # self.dlg.setWindowTitle(title)
+        # self.dlg.width.setValue(rect.width())
+        # self.dlg.height.setValue(rect.height())
+        # self.dlg.show()
+        # result = self.dlg.exec_()
 
-        if result:
-            # check for a valid result from the dialog
-            if self.dlg.width.value() <= 0 or self.dlg.height.value() <= 0:
-                iface.messageBar().pushMessage("Add feature", 
-                    "Invalid dimensions (must be numeric and greater than zero)",
-                    level=_warning, duration=5)
-                self.reset()
-                return
+        # if result:
+        #     # check for a valid result from the dialog
+        #     if self.dlg.width.value() <= 0 or self.dlg.height.value() <= 0:
+        #         iface.messageBar().pushMessage("Add feature", 
+        #             "Invalid dimensions (must be numeric and greater than zero)",
+        #             level=_warning, duration=5)
+        #         self.reset()
+        #         return
             
-            # adjust start and end points based on dimensions
-            if self.startPoint.x() < self.endPoint.x():
-                self.endPoint.setX(self.startPoint.x() + self.dlg.width.value())
-            else:
-                self.endPoint.setX(self.startPoint.x() - self.dlg.width.value())
-
-            if self.startPoint.y() < self.endPoint.y():
-                self.endPoint.setY(self.startPoint.y() + self.dlg.height.value())
-            else:
-                self.endPoint.setY(self.startPoint.y() - self.dlg.height.value())
-
-            self.add_feature_to_layer()
+        # adjust start and end points based on dimensions
+        if self.startPoint.x() < self.endPoint.x():
+            self.endPoint.setX(self.startPoint.x() + rect.width())
         else:
-            self.reset()
+            self.endPoint.setX(self.startPoint.x() - rect.width())
+
+        if self.startPoint.y() < self.endPoint.y():
+            self.endPoint.setY(self.startPoint.y() + rect.height())
+        else:
+            self.endPoint.setY(self.startPoint.y() - rect.height())
+
+        self.add_feature_to_layer()
+        # else:
+        #     self.reset()
 
     def canvasReleaseEvent(self, event):
         if event.button() == Qt.LeftButton:
@@ -195,6 +195,8 @@ class GeometryTool(QgsMapTool):
         """
         # adjust dimension on the fly if Shift is pressed
         if QApplication.keyboardModifiers() == Qt.ShiftModifier:
+            self.endPoint = self.toMapCoordinates(event.pos())
+        else:
             end_point = QgsPointXY(self.toMapCoordinates(event.pos()))
             rect = QgsRectangle(self.startPoint, end_point)
 
@@ -217,8 +219,6 @@ class GeometryTool(QgsMapTool):
                     end_point.setX(self.startPoint.x() - rect.height())
 
             self.endPoint = end_point
-        else:
-            self.endPoint = self.toMapCoordinates(event.pos())
 
     def show_rubberband(self):
         """
@@ -234,17 +234,19 @@ class GeometryTool(QgsMapTool):
         layer = self.canvas.currentLayer()
         feature = QgsFeature(layer.fields())
         feature.setGeometry(self.transformed_geometry(layer))
+        layer.addFeature(feature)
+        self.reset()
 
-        if layer.fields().count():
-            ff = iface.getFeatureForm(layer, feature)
-            if version_info[0] >= 3:
-                ff.setMode(QgsAttributeEditorContext.AddFeatureMode)
-            ff.accepted.connect(self.reset)
-            ff.rejected.connect(self.reset)
-            ff.show()
-        else:
-            layer.addFeature(feature)
-            self.reset()
+        # if layer.fields().count():
+        #     ff = iface.getFeatureForm(layer, feature)
+        #     if version_info[0] >= 3:
+        #         ff.setMode(QgsAttributeEditorContext.AddFeatureMode)
+        #     ff.accepted.connect(self.reset)
+        #     ff.rejected.connect(self.reset)
+        #     ff.show()
+        # else:
+        #     layer.addFeature(feature)
+        #     self.reset()
 
     def geometry(self):
         """
